@@ -10,6 +10,7 @@
 
 #include "smelt.h"
 #include "strptimeval.h"
+#include "histgram.h"
 #include "depends.h"
 
 #define AP_M 1000000
@@ -66,16 +67,15 @@ void
 smelt_print_result(struct smelt *mt)
 {
 	int found;
-	long *diff;
+	double *diff;
 	long sum, max, min;	/* rtt */
 	long prev_tv, si_sum;	/* sampling interval */
 	long sum_len;	/* pkt len */
-	double mean;
-	double variance, sample_dev, std_dev;
 	int loss;
 	int i, j;
 	char fmt_header[128];
 
+	/* allocate the maximum number of diffs */
 	if ((diff = calloc(mt->tx_index, sizeof(double))) == NULL)
 		err(1, "ERROR: calloc(diff)");
 
@@ -96,7 +96,6 @@ smelt_print_result(struct smelt *mt)
 	 *    mean pktlen (B): 1280.0
 	 */
 	sum = max = min = sum_len = 0;
-	sample_dev = std_dev = 0;
 	prev_tv = si_sum = 0;
 	loss = 0;
 	for (i = 0; i < mt->tx_index; i++) {
@@ -143,14 +142,8 @@ smelt_print_result(struct smelt *mt)
 			loss++;
 	}
 
-	/* sample/std deviation */
-	mean = sum / (mt->tx_index);
-	variance = 0;
-	for (i = 0; i < mt->rx_index; i++) {
-		variance += (mean - diff[i]) * (mean - diff[i]);
-	}
-	std_dev = sqrt(variance / mt->rx_index);
-	sample_dev = sqrt(variance / (mt->rx_index - 1));
+	if (mt->tx_index - loss != mt->rx_index)
+		printf("WARN: #of TX + loss != #of RX\n");
 
 	/* output */
 	if (mt->f_csv) {
@@ -173,11 +166,18 @@ smelt_print_result(struct smelt *mt)
 		printf("  rtt min (us)  : %ld\n", min);
 		printf("  rtt max (us)  : %ld\n", max);
 		printf("  rtt mean (us) : %.3f\n",
-			mt->rx_index == 0 ? -1 : mean);
-		printf("  stddev (us)   : %.3f\n", std_dev);
-		printf("  sample (us)   : %.3f\n", sample_dev);
+			mt->rx_index == 0 ? -1 : sum/(float)mt->rx_index);
 		printf("  mean pktlen (B): %.1f\n",
 			mt->rx_index == 0 ? -1 : sum_len/(float)mt->rx_index);
+	}
+
+	/* histgram */
+	if (mt->rx_index) {
+		int *hist;
+		double tick;
+
+		get_histgram(diff, mt->tx_index - loss, 10, &hist, &tick);
+		print_histgram(hist, 10, tick);
 	}
 }
 

@@ -73,7 +73,7 @@ $(TS_EXE): $(TS_OBJS)
 
 $(TV_EXE): $(TV_OBJS)
 
-$(SMELT_LIB): smelt.o strptimeval.o strftimeval.o
+$(SMELT_LIB): smelt.o strptimeval.o strftimeval.o histgram.o
 	ar rv $@ $^
 
 #
