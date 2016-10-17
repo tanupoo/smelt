@@ -63,7 +63,7 @@ get_min(double *data, size_t n_data, double *min)
 #define MAX_HIST_SIZE	60
 
 void
-print_histgram(int *hist, size_t n_hist, double tick)
+print_histgram(int *hist, size_t n_hist, double min, double tick)
 {
 	int i, j;
 	double t;
@@ -78,7 +78,7 @@ print_histgram(int *hist, size_t n_hist, double tick)
 
 	max_hist = hist[0];
 	max_val = snprintf(buf, sizeof(buf), "%d", hist[0]);
-	t = 0;
+	t = min;
 	for (i = 1; i < n_hist; i++) {
 		max_hist = max_hist > hist[i] ? max_hist : hist[i];
 		j = snprintf(buf, sizeof(buf), "%d", hist[i]);
@@ -88,7 +88,7 @@ print_histgram(int *hist, size_t n_hist, double tick)
 	max_res = snprintf(buf, sizeof(buf), "%.2f", t);
 	snprintf(fmt, sizeof(fmt), "%%%d.2f: %%%dd: ", max_res, max_val);
 
-	t = 0;
+	t = min;
 	for (i = 0; i < n_hist; i++) {
 		printf(fmt, t, hist[i]);
 		for (j = 0; j < (hist[i] * MAX_HIST_SIZE) / max_hist; j++)
@@ -100,9 +100,9 @@ print_histgram(int *hist, size_t n_hist, double tick)
 
 int
 get_histgram(double *data, size_t n_data, size_t scale,
-		int **hist, double *tick)
+		int **hist, double *min, double *tick)
 {
-	double min, max;
+	double max;
 	int n, i;
 
 	if (!n_data || !scale)
@@ -113,11 +113,11 @@ get_histgram(double *data, size_t n_data, size_t scale,
 	for (n = 0; n < scale; n++)
 		(*hist)[n] = 0;
 
-	get_min_max(data, n_data, &min, &max);
-	*tick = (max - min) / scale;
+	get_min_max(data, n_data, min, &max);
+	*tick = (max - *min) / scale;
 	*tick = *tick ? *tick : 1;
 	for (i = 0; i < n_data; i++) {
-		n = (int)((data[i] - min) / *tick);
+		n = (int)((data[i] - *min) / *tick);
 		if (f_debug)
 			printf("data[%d] = %f n=%d\n", i, data[i], n);
 		if (n >= scale) {

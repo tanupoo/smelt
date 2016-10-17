@@ -174,10 +174,10 @@ smelt_print_result(struct smelt *mt)
 	/* histgram */
 	if (mt->rx_index) {
 		int *hist;
-		double tick;
+		double m, tick;
 
-		get_histgram(diff, mt->tx_index - loss, 10, &hist, &tick);
-		print_histgram(hist, 10, tick);
+		get_histgram(diff, mt->tx_index - loss, 10, &hist, &m, &tick);
+		print_histgram(hist, 10, m, tick);
 	}
 }
 
