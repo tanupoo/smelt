@@ -67,21 +67,31 @@ print_histgram(int *hist, size_t n_hist, double tick)
 {
 	int i, j;
 	double t;
-	int max;
+	int max_hist, max_res, max_val;
+	char buf[24];
+	char fmt[24];
 
 	if (!n_hist) {
 		warn("ERROR: no histgram was found.");
 		return;
 	}
 
-	max = hist[0];
-	for (i = 1; i < n_hist; i++)
-		max = max > hist[i] ? max : hist[i];
+	max_hist = hist[0];
+	max_val = snprintf(buf, sizeof(buf), "%d", hist[0]);
+	t = 0;
+	for (i = 1; i < n_hist; i++) {
+		max_hist = max_hist > hist[i] ? max_hist : hist[i];
+		j = snprintf(buf, sizeof(buf), "%d", hist[i]);
+		max_val = max_val > j ? max_val : j;
+		t += tick;
+	}
+	max_res = snprintf(buf, sizeof(buf), "%.2f", t);
+	snprintf(fmt, sizeof(fmt), "%%%d.2f: %%%dd: ", max_res, max_val);
 
 	t = 0;
 	for (i = 0; i < n_hist; i++) {
-		printf("%8.2f: %4d:", t, hist[i]);
-		for (j = 0; j < (hist[i] * MAX_HIST_SIZE) / max; j++)
+		printf(fmt, t, hist[i]);
+		for (j = 0; j < (hist[i] * MAX_HIST_SIZE) / max_hist; j++)
 			printf("*");
 		printf("\n");
 		t += tick;
